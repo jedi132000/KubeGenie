@@ -27,27 +27,31 @@ class SimpleKubeGenieUI:
         self.backend_url = BACKEND_URL
         
     def authenticate(self, username: str, password: str) -> str:
-        """Fast synchronous authentication"""
+        """Fast synchronous authentication with debug logging"""
+        print(f"[DEBUG] authenticate called with username={username}")
         try:
-            # Use requests for faster authentication
             response = requests.post(
                 f"{API_BASE}/auth/login",
                 data={"username": username, "password": password},
                 headers={"Content-Type": "application/x-www-form-urlencoded"},
-                timeout=5  # 5 second timeout
+                timeout=5
             )
-            
+            print(f"[DEBUG] auth response status: {response.status_code}")
+            print(f"[DEBUG] auth response text: {response.text}")
             if response.status_code == 200:
                 data = response.json()
+                print(f"[DEBUG] auth response json: {data}")
                 self.auth_token = data.get("access_token")
+                print(f"[DEBUG] auth_token set: {self.auth_token}")
                 return "✅ Authentication successful!"
             else:
                 return f"❌ Authentication failed: {response.text}"
-                
         except requests.exceptions.Timeout:
+            print("[DEBUG] Authentication timeout")
             return f"❌ Authentication timeout - backend took too long to respond"
         except Exception as e:
-            logger.error(f"Authentication error: {e}")
+            print(f"[DEBUG] Authentication error: {e}")
+            logger.error("Authentication error: %s", e)
             return f"❌ Authentication error: {str(e)}"
     
     def get_cluster_info(self) -> str:
@@ -79,21 +83,25 @@ class SimpleKubeGenieUI:
     def process_chat_message(self, message: str, history: Optional[List[List[str]]] = None) -> Tuple[str, List[List[str]]]:
         """Process chat message using the REAL OpenAI-powered chat endpoint"""
         try:
-            # Initialize history if None - ensure it's always a list
             if history is None or not isinstance(history, list):
                 history = []
-            
             if not message.strip():
                 return "", history
-            
             # Call the REAL chat endpoint with OpenAI integration
-            response = self._call_real_chat_endpoint(message)
-            
-            # Update history - ensure we're appending a list of two strings
-            history.append([str(message), str(response)])
-            
+            response_json = self._call_real_chat_endpoint_full(message)
+            # Format backend response for display
+            if isinstance(response_json, dict):
+                display = response_json.get("response", "No response received")
+                actions = response_json.get("actions", [])
+                suggestions = response_json.get("suggestions", [])
+                if actions:
+                    display += "\n\n**Actions:**\n" + "\n".join([json.dumps(a, indent=2) for a in actions])
+                if suggestions:
+                    display += "\n\n**Suggestions:**\n" + "\n".join([f"- {s}" for s in suggestions])
+            else:
+                display = str(response_json)
+            history.append([str(message), display])
             return "", history
-            
         except Exception as e:
             error_response = f"Sorry, I encountered an error: {str(e)}"
             if history is None or not isinstance(history, list):
@@ -101,13 +109,11 @@ class SimpleKubeGenieUI:
             history.append([str(message), str(error_response)])
             return "", history
     
-    def _call_real_chat_endpoint(self, message: str) -> str:
-        """Call the real OpenAI-powered chat endpoint"""
+    def _call_real_chat_endpoint_full(self, message: str) -> dict:
+        """Call the real OpenAI-powered chat endpoint and return full JSON"""
         try:
-            # Check if we're authenticated
             if not self.auth_token:
-                return "⚠️ Please authenticate first using the Login section below."
-            
+                return {"response": "⚠️ Please authenticate first using the Login section below."}
             response = requests.post(
                 f"{self.backend_url}/api/v1/chat/message",
                 headers={
@@ -117,17 +123,14 @@ class SimpleKubeGenieUI:
                 json={"message": message},
                 timeout=30
             )
-            
             if response.status_code == 200:
-                chat_response = response.json()
-                return chat_response.get("response", "No response received")
+                return response.json()
             elif response.status_code == 401:
-                return "🔒 Authentication failed. Please login again."
+                return {"response": "🔒 Authentication failed. Please login again."}
             else:
-                return f"❌ Backend error (status {response.status_code}): {response.text}"
-                
+                return {"response": f"❌ Backend error (status {response.status_code}): {response.text}"}
         except Exception as e:
-            return f"🔌 Connection error: {str(e)}"
+            return {"response": f"🔌 Connection error: {str(e)}"}
     
     def _handle_user_intent(self, message: str) -> str:
         """Handle user intent synchronously"""
@@ -188,61 +191,145 @@ class SimpleKubeGenieUI:
             headers = {}
             if self.auth_token:
                 headers["Authorization"] = f"Bearer {self.auth_token}"
-                
             with httpx.Client() as client:
                 response = client.get(f"{API_BASE}/k8s/namespaces", headers=headers)
-                
                 if response.status_code == 200:
                     namespaces = response.json()
-                    result = "🏷️ **Available Namespaces:**\n\n"
+                    if not namespaces:
+                        return "No namespaces found."
+                    result = "Available namespaces:\n"
                     for ns in namespaces:
-                        status_icon = "✅" if ns['status'] == "Active" else "⚠️"
-                        result += f"{status_icon} **{ns['name']}** ({ns['status']})\n"
-                    
-                    return result
+                        result += f"- {ns['name']} ({ns['status']})\n"
+                    return result.strip()
                 else:
-                    return f"❌ Failed to get namespaces: {response.text}"
-                    
+                    return f"Failed to get namespaces: {response.text}"
         except Exception as e:
-            return f"❌ Error getting namespaces: {str(e)}"
+            return f"Error getting namespaces: {str(e)}"
     
     def _handle_general_query(self, message: str) -> str:
         """Handle general queries"""
-        return f"""👋 **Hi! I'm KubeGenie, your Kubernetes assistant!**
-
-I can help you manage your Kubernetes cluster. Here are some things you can ask:
-
-**📊 Cluster Information:**
-- "What's the cluster status?"
-- "Show me cluster info"
-
-**📦 Pod Management:**
-- "List all pods"
-- "Show me pods"
-
-**🏷️ Namespaces:**
-- "Show me all namespaces"
-- "List namespaces"
-
-Just ask me what you'd like to do! 🎯
-
-*Your message: "{message}"*
-"""
+        return f"👋 **Hi! I'm KubeGenie, your Kubernetes assistant!**"
+        def _handle_namespace_query(self) -> str:
+            """Handle namespace queries"""
+            try:
+                headers = {}
+                if self.auth_token:
+                    headers["Authorization"] = f"Bearer {self.auth_token}"
+                with httpx.Client() as client:
+                    response = client.get(f"{API_BASE}/k8s/namespaces", headers=headers)
+                    if response.status_code == 200:
+                        namespaces = response.json()
+                        if not namespaces:
+                            return "No namespaces found."
+                        result = "Available namespaces:\n"
+                        for ns in namespaces:
+                            result += f"- {ns['name']} ({ns['status']})\n"
+                        return result.strip()
+                    else:
+                        return f"Failed to get namespaces: {response.text}"
+            except Exception as e:
+                return f"Error getting namespaces: {str(e)}"
 
 # Initialize the UI
 kubegenie = SimpleKubeGenieUI()
 
 def create_simple_ui():
-    """Create simplified Gradio interface"""
-    
+
+        # Create simplified Gradio interface
+    print("UI started: create_simple_ui() called")
+
+    # Event handler functions (single set, 4 spaces per level)
+    def handle_auth(username, password):
+        print(f"[DEBUG] ENTER handle_auth with username={username}, password={password}")
+        result = kubegenie.authenticate(username, password)
+        print(f"[DEBUG] handle_auth result before return: {result}")
+        print(f"[DEBUG] EXIT handle_auth returning: {result}")
+        return result
+
+    def get_info():
+        print("[DEBUG] get_info called")
+        result = kubegenie.get_cluster_info()
+        print(f"[DEBUG] get_info result: {result}")
+        return result
+
+    def handle_message(message, history):
+        print(f"[DEBUG] handle_message called with message={message}")
+        _, new_history = kubegenie.process_chat_message(message, history)
+        print(f"[DEBUG] handle_message new_history: {new_history}")
+        return "", new_history
+
+    def quick_pods(history):
+        print("[DEBUG] quick_pods called")
+        try:
+            ui = SimpleKubeGenieUI()
+            token = ui.auth_token if hasattr(ui, 'auth_token') and ui.auth_token else None
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
+            response = requests.post(
+                f"{API_BASE}/chat/message",
+                headers=headers,
+                json={"message": "list all pods"},
+                timeout=10
+            )
+            if response.status_code == 200:
+                data = response.json()
+                display = data.get("response", "No response received")
+                actions = data.get("actions", [])
+                suggestions = data.get("suggestions", [])
+                if actions:
+                    display += "\n\n**Actions:**\n" + "\n".join([json.dumps(a, indent=2) for a in actions])
+                if suggestions:
+                    display += "\n\n**Suggestions:**\n" + "\n".join([f"- {s}" for s in suggestions])
+            else:
+                display = f"❌ Failed to get pods: {response.text}"
+        except Exception as e:
+            display = f"❌ Error getting pods: {str(e)}"
+        new_history = history if history else []
+        new_history.append(["List all pods", display])
+        print(f"[DEBUG] quick_pods new_history: {new_history}")
+        return new_history
+
+    def quick_status(history):
+        ui = SimpleKubeGenieUI()
+        display = ui.get_cluster_info()
+        new_history = history if history else []
+        new_history.append(["Cluster status", display])
+        return new_history
+
+    def quick_namespaces(history):
+        print("[DEBUG] quick_namespaces called")
+        try:
+            ui = SimpleKubeGenieUI()
+            token = ui.auth_token if hasattr(ui, 'auth_token') and ui.auth_token else None
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
+            response = requests.post(
+                f"{API_BASE}/chat/message",
+                headers=headers,
+                json={"message": "list namespaces"},
+                timeout=10
+            )
+            if response.status_code == 200:
+                data = response.json()
+                display = data.get("response", "No response received")
+                actions = data.get("actions", [])
+                suggestions = data.get("suggestions", [])
+                if actions:
+                    display += "\n\n**Actions:**\n" + "\n".join([json.dumps(a, indent=2) for a in actions])
+                if suggestions:
+                    display += "\n\n**Suggestions:**\n" + "\n".join([f"- {s}" for s in suggestions])
+            else:
+                display = f"❌ Failed to get namespaces: {response.text}"
+        except Exception as e:
+            display = f"❌ Error getting namespaces: {str(e)}"
+        new_history = history if history else []
+        new_history.append(["List namespaces", display])
+        print(f"[DEBUG] quick_namespaces new_history: {new_history}")
+        return new_history
+
     with gr.Blocks(title="KubeGenie - Smart Kubernetes Management") as demo:
-        
         gr.Markdown("""
         # 🧞‍♂️ KubeGenie - Smart Kubernetes Management
-        
         **Manage your Kubernetes cluster through natural language conversations**
         """)
-        
         with gr.Row():
             with gr.Column(scale=2):
                 # Main chat interface
@@ -250,20 +337,15 @@ def create_simple_ui():
                     label="💬 Chat with KubeGenie",
                     height=400
                 )
-                
                 msg_input = gr.Textbox(
                     label="Message",
                     placeholder="Ask me anything about your Kubernetes cluster..."
                 )
-                
                 send_btn = gr.Button("Send 🚀", variant="primary")
-                
                 # Example buttons
-                with gr.Row():
-                    status_btn = gr.Button("Cluster Status")
-                    pods_btn = gr.Button("List Pods") 
-                    ns_btn = gr.Button("List Namespaces")
-            
+                status_btn = gr.Button("Cluster Status")
+                pods_btn = gr.Button("List Pods") 
+                ns_btn = gr.Button("List Namespaces")
             with gr.Column(scale=1):
                 # Authentication section
                 gr.Markdown("### 🔐 Authentication")
@@ -271,46 +353,171 @@ def create_simple_ui():
                 password_input = gr.Textbox(label="Password", type="password", value="admin123")
                 auth_btn = gr.Button("Login")
                 auth_status = gr.Textbox(label="Status", interactive=False)
-                
                 # Quick info section
                 gr.Markdown("### 🏷️ Quick Info")
                 info_btn = gr.Button("Get Cluster Info")
                 info_display = gr.Textbox(label="Information", lines=6, interactive=False)
-        
-        # Event handlers
-        def handle_auth(username, password):
-            return kubegenie.authenticate(username, password)
-        
-        def handle_message(message, history):
-            _, new_history = kubegenie.process_chat_message(message, history)
-            return "", new_history
-        
-        def get_info():
-            return kubegenie.get_cluster_info()
-        
-        def quick_status(history):
-            _, new_history = kubegenie.process_chat_message("What's the cluster status?", history)
-            return new_history
-        
-        def quick_pods(history):
-            _, new_history = kubegenie.process_chat_message("List all pods", history)
-            return new_history
-            
-        def quick_namespaces(history):
-            _, new_history = kubegenie.process_chat_message("Show me all namespaces", history)
-            return new_history
-        
-        # Wire up events
+        # Event wiring
         auth_btn.click(handle_auth, inputs=[username_input, password_input], outputs=[auth_status])
         info_btn.click(get_info, outputs=[info_display])
-        
         send_btn.click(handle_message, inputs=[msg_input, chatbot], outputs=[msg_input, chatbot])
         msg_input.submit(handle_message, inputs=[msg_input, chatbot], outputs=[msg_input, chatbot])
-        
         status_btn.click(quick_status, inputs=[chatbot], outputs=[chatbot])
         pods_btn.click(quick_pods, inputs=[chatbot], outputs=[chatbot])  
         ns_btn.click(quick_namespaces, inputs=[chatbot], outputs=[chatbot])
-    
+    return demo
+
+    with gr.Blocks(title="KubeGenie - Smart Kubernetes Management") as demo:
+        gr.Markdown("""
+        # 🧞‍♂️ KubeGenie - Smart Kubernetes Management
+        **Manage your Kubernetes cluster through natural language conversations**
+        """)
+        with gr.Row():
+            with gr.Column(scale=2):
+                # Main chat interface
+                chatbot = gr.Chatbot(
+                    label="💬 Chat with KubeGenie",
+                    height=400
+                )
+                msg_input = gr.Textbox(
+                    label="Message",
+                    placeholder="Ask me anything about your Kubernetes cluster..."
+                )
+                send_btn = gr.Button("Send 🚀", variant="primary")
+                # Example buttons
+                status_btn = gr.Button("Cluster Status")
+                pods_btn = gr.Button("List Pods") 
+                ns_btn = gr.Button("List Namespaces")
+            with gr.Column(scale=1):
+                # Authentication section
+                gr.Markdown("### 🔐 Authentication")
+                username_input = gr.Textbox(label="Username", value="admin")
+                password_input = gr.Textbox(label="Password", type="password", value="admin123")
+                auth_btn = gr.Button("Login")
+                auth_status = gr.Textbox(label="Status", interactive=False)
+                # Quick info section
+                gr.Markdown("### 🏷️ Quick Info")
+                info_btn = gr.Button("Get Cluster Info")
+                info_display = gr.Textbox(label="Information", lines=6, interactive=False)
+        # Event wiring
+        auth_btn.click(handle_auth, inputs=[username_input, password_input], outputs=[auth_status])
+        info_btn.click(get_info, outputs=[info_display])
+        send_btn.click(handle_message, inputs=[msg_input, chatbot], outputs=[msg_input, chatbot])
+        msg_input.submit(handle_message, inputs=[msg_input, chatbot], outputs=[msg_input, chatbot])
+        status_btn.click(quick_status, inputs=[chatbot], outputs=[chatbot])
+        pods_btn.click(quick_pods, inputs=[chatbot], outputs=[chatbot])  
+        ns_btn.click(quick_namespaces, inputs=[chatbot], outputs=[chatbot])
+    return demo
+
+    def handle_auth(username, password):
+        print(f"[DEBUG] ENTER handle_auth with username={username}, password={password}")
+        result = kubegenie.authenticate(username, password)
+        print(f"[DEBUG] handle_auth result before return: {result}")
+        print(f"[DEBUG] EXIT handle_auth returning: {result}")
+        return result
+
+    def handle_message(message, history):
+        print(f"[DEBUG] handle_message called with message={message}")
+        _, new_history = kubegenie.process_chat_message(message, history)
+        print(f"[DEBUG] handle_message new_history: {new_history}")
+        return "", new_history
+
+    def get_info():
+        print("[DEBUG] get_info called")
+        result = kubegenie.get_cluster_info()
+        print(f"[DEBUG] get_info result: {result}")
+        return result
+
+    def quick_pods(history):
+        ui = SimpleKubeGenieUI()
+        display = ui._handle_pods_query()
+        # Remove everything after any actions/suggestions marker (markdown or plain)
+        import re
+        display = re.split(r'(\*\*Actions:\*\*|Actions:|\*\*Suggestions:\*\*|Suggestions:)', display)[0].strip()
+        new_history = history if history else []
+        new_history.append(["List all pods", display])
+        return new_history
+
+    def quick_status(history):
+        print("[DEBUG] quick_status called")
+        try:
+            ui = SimpleKubeGenieUI()
+            token = ui.auth_token if hasattr(ui, 'auth_token') and ui.auth_token else None
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
+            response = requests.post(
+                f"{API_BASE}/chat/message",
+                headers=headers,
+                json={"message": "cluster status"},
+                timeout=10
+            )
+            if response.status_code == 200:
+                data = response.json()
+                display = data.get("response", "No response received")
+                actions = data.get("actions", [])
+                suggestions = data.get("suggestions", [])
+                if actions:
+                    display += "\n\n**Actions:**\n" + "\n".join([json.dumps(a, indent=2) for a in actions])
+                if suggestions:
+                    display += "\n\n**Suggestions:**\n" + "\n".join([f"- {s}" for s in suggestions])
+            else:
+                display = f"❌ Failed to get cluster status: {response.text}"
+        except Exception as e:
+            display = f"❌ Error getting cluster status: {str(e)}"
+        new_history = history if history else []
+        new_history.append(["Cluster status", display])
+        print(f"[DEBUG] quick_status new_history: {new_history}")
+        return new_history
+
+    def quick_namespaces(history):
+        ui = SimpleKubeGenieUI()
+        display = ui._handle_namespace_query()
+        # Remove everything after any actions/suggestions marker (markdown or plain)
+        import re
+        display = re.split(r'(\*\*Actions:\*\*|Actions:|\*\*Suggestions:\*\*|Suggestions:)', display)[0].strip()
+        new_history = history if history else []
+        new_history.append(["List namespaces", display])
+        return new_history
+
+    with gr.Blocks(title="KubeGenie - Smart Kubernetes Management") as demo:
+        gr.Markdown("""
+        # 🧞‍♂️ KubeGenie - Smart Kubernetes Management
+        **Manage your Kubernetes cluster through natural language conversations**
+        """)
+        with gr.Row():
+            with gr.Column(scale=2):
+                # Main chat interface
+                chatbot = gr.Chatbot(
+                    label="💬 Chat with KubeGenie",
+                    height=400
+                )
+                msg_input = gr.Textbox(
+                    label="Message",
+                    placeholder="Ask me anything about your Kubernetes cluster..."
+                )
+                send_btn = gr.Button("Send 🚀", variant="primary")
+                # Example buttons
+                status_btn = gr.Button("Cluster Status")
+                pods_btn = gr.Button("List Pods") 
+                ns_btn = gr.Button("List Namespaces")
+            with gr.Column(scale=1):
+                # Authentication section
+                gr.Markdown("### 🔐 Authentication")
+                username_input = gr.Textbox(label="Username", value="admin")
+                password_input = gr.Textbox(label="Password", type="password", value="admin123")
+                auth_btn = gr.Button("Login")
+                auth_status = gr.Textbox(label="Status", interactive=False)
+                # Quick info section
+                gr.Markdown("### 🏷️ Quick Info")
+                info_btn = gr.Button("Get Cluster Info")
+                info_display = gr.Textbox(label="Information", lines=6, interactive=False)
+        # Event wiring
+        auth_btn.click(handle_auth, inputs=[username_input, password_input], outputs=[auth_status])
+        info_btn.click(get_info, outputs=[info_display])
+        send_btn.click(handle_message, inputs=[msg_input, chatbot], outputs=[msg_input, chatbot])
+        msg_input.submit(handle_message, inputs=[msg_input, chatbot], outputs=[msg_input, chatbot])
+        status_btn.click(quick_status, inputs=[chatbot], outputs=[chatbot])
+        pods_btn.click(quick_pods, inputs=[chatbot], outputs=[chatbot])  
+        ns_btn.click(quick_namespaces, inputs=[chatbot], outputs=[chatbot])
     return demo
 
 if __name__ == "__main__":
