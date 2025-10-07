@@ -29,7 +29,7 @@ kubegenie/
 └── scripts/          # Build and deployment scripts
 ```
 
-## 🛠️ Development
+## 🛠️ Development & Quick Start
 
 ### Prerequisites
 
@@ -47,17 +47,41 @@ kubegenie/
    cd kubegenie
    ```
 
-2. **Set up virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
+2. **Install dependencies**
    ```bash
    # Install backend dependencies
    pip install -r backend/requirements.txt
-   
+   # Install UI dependencies
+   pip install -r ui/requirements.txt
+   ```
+
+3. **Start backend and UI**
+   ```bash
+   # Start backend
+   cd backend
+   python main.py
+
+   # In a separate terminal, start UI
+   cd ../ui
+   python simple_main.py
+   ```
+
+4. **Access the platform**
+   - Gradio UI: http://localhost:7860
+   - FastAPI backend: http://localhost:8000
+
+### Repo Hygiene
+
+- All unnecessary files (venv/, __pycache__, log files) are excluded for a clean repo.
+- Only essential code, configs, and docs are tracked.
+
+### Live Data & Production Readiness
+
+- KubeGenie now returns live Kubernetes cluster data (pods, namespaces, status) in all user-facing interfaces.
+- All technical output (actions, suggestions, debug info) is suppressed for end users.
+- Safety controls, RBAC, and audit logging are enforced by default.
+
+For more details, see `docs/DEVELOPMENT.md` and `docs/ROADMAP.md`.
    # Install UI dependencies  
    pip install -r ui/requirements.txt
    
