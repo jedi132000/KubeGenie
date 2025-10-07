@@ -1,0 +1,125 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Backend: FastAPI Server",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload"
+      ],
+      "cwd": "${workspaceFolder}/backend",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/backend",
+        "API_DEBUG": "true"
+      },
+      "jinja": true,
+      "justMyCode": false,
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Backend: FastAPI + Gradio",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "main_gradio:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload"
+      ],
+      "cwd": "${workspaceFolder}/backend",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/backend",
+        "API_DEBUG": "true"
+      },
+      "jinja": true,
+      "justMyCode": false,
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "UI: Gradio Simple",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/ui/simple_main.py",
+      "cwd": "${workspaceFolder}/ui",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/ui",
+        "KUBEGENIE_BACKEND_URL": "http://localhost:8000"
+      },
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Tests: Backend Unit Tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "tests/",
+        "-v",
+        "-s"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/backend"
+      },
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Tests: Backend Single Test",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "${file}",
+        "-v",
+        "-s"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/backend"
+      },
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "CLI: KubeGenie CLI",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli/main.py",
+      "args": [
+        "--help"
+      ],
+      "cwd": "${workspaceFolder}/cli",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/cli"
+      },
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Python: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack: Backend + UI",
+      "configurations": [
+        "Backend: FastAPI Server",
+        "UI: Gradio Simple"
+      ],
+      "stopAll": true
+    }
+  ]
+}

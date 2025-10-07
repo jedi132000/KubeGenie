@@ -254,7 +254,14 @@ dist/
 .pnp.*
 
 # IDEs
-.vscode/
+# Keep VS Code workspace configuration for team
+!.vscode/
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+# But ignore user-specific files
+.vscode/*.log
 .idea/
 *.swp
 *.swo
