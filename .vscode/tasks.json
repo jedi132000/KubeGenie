@@ -1,0 +1,226 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup: Install All Dependencies",
+      "type": "shell",
+      "command": "bash",
+      "args": ["scripts/setup-dev.sh"],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Setup: Create Virtual Environment",
+      "type": "shell",
+      "command": "python3 -m venv venv",
+      "group": "build",
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Install Dependencies",
+      "type": "shell",
+      "command": "source venv/bin/activate && pip install -r backend/requirements.txt",
+      "group": "build",
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "UI: Install Dependencies",
+      "type": "shell",
+      "command": "source venv/bin/activate && pip install -r ui/requirements.txt",
+      "group": "build",
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Start Server",
+      "type": "shell",
+      "command": "source venv/bin/activate && cd backend && python main.py",
+      "group": "build",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Application startup complete.*$",
+          "endsPattern": "^.*Application startup complete.*$"
+        }
+      }
+    },
+    {
+      "label": "UI: Start Gradio",
+      "type": "shell",
+      "command": "source venv/bin/activate && cd ui && python simple_main.py",
+      "group": "build",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Running on.*$",
+          "endsPattern": "^.*Running on.*$"
+        }
+      }
+    },
+    {
+      "label": "Docker: Start Services",
+      "type": "shell",
+      "command": "docker-compose up -d",
+      "group": "build",
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: Stop Services",
+      "type": "shell",
+      "command": "docker-compose down",
+      "group": "build",
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: View Logs",
+      "type": "shell",
+      "command": "docker-compose logs -f",
+      "group": "build",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests: Run All Backend Tests",
+      "type": "shell",
+      "command": "source venv/bin/activate && pytest tests/ -v",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests: Run with Coverage",
+      "type": "shell",
+      "command": "source venv/bin/activate && pytest tests/ -v --cov=backend --cov-report=html",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint: Run Black (Format)",
+      "type": "shell",
+      "command": "source venv/bin/activate && black backend/ ui/ cli/ --line-length 100",
+      "group": "build",
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint: Run Flake8",
+      "type": "shell",
+      "command": "source venv/bin/activate && flake8 backend/ ui/ cli/ --max-line-length=100",
+      "group": "build",
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint: Run isort (Import Sorting)",
+      "type": "shell",
+      "command": "source venv/bin/activate && isort backend/ ui/ cli/ --profile black",
+      "group": "build",
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Kubectl: Get Pods",
+      "type": "shell",
+      "command": "kubectl get pods --all-namespaces",
+      "group": "none",
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Kubectl: Get Services",
+      "type": "shell",
+      "command": "kubectl get services --all-namespaces",
+      "group": "none",
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Clean: Remove Cache Files",
+      "type": "shell",
+      "command": "find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true && find . -type d -name '.pytest_cache' -exec rm -rf {} + 2>/dev/null || true && find . -type d -name '.mypy_cache' -exec rm -rf {} + 2>/dev/null || true",
+      "group": "build",
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Full Stack: Start All Services",
+      "dependsOn": [
+        "Backend: Start Server",
+        "UI: Start Gradio"
+      ],
+      "dependsOrder": "sequence",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "KubeGenie"
+    },
+    {
+      "path": "backend",
+      "name": "Backend"
+    },
+    {
+      "path": "ui",
+      "name": "UI"
+    },
+    {
+      "path": "cli",
+      "name": "CLI"
+    },
+    {
+      "path": "tests",
+      "name": "Tests"
+    },
+    {
+      "path": "docs",
+      "name": "Documentation"
+    }
+  ],
+  "settings": {
+    "python.defaultInterpreterPath": "${workspaceFolder:KubeGenie}/venv/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.extraPaths": [
+      "${workspaceFolder:Backend}",
+      "${workspaceFolder:UI}",
+      "${workspaceFolder:CLI}"
+    ],
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/.pytest_cache": true,
+      "**/.mypy_cache": true,
+      "**/venv": true,
+      "**/.venv": true,
+      "**/node_modules": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "ms-azuretools.vscode-docker",
+      "ms-kubernetes-tools.vscode-kubernetes-tools",
+      "redhat.vscode-yaml",
+      "GitHub.copilot"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Backend: FastAPI Server",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "uvicorn",
+        "args": [
+          "main:app",
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "8000",
+          "--reload"
+        ],
+        "cwd": "${workspaceFolder:Backend}",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder:Backend}",
+          "API_DEBUG": "true"
+        },
+        "jinja": true,
+        "justMyCode": false,
+        "console": "integratedTerminal"
+      },
+      {
+        "name": "UI: Gradio Simple",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder:UI}/simple_main.py",
+        "cwd": "${workspaceFolder:UI}",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder:UI}",
+          "KUBEGENIE_BACKEND_URL": "http://localhost:8000"
+        },
+        "console": "integratedTerminal"
+      }
+    ],
+    "compounds": [
+      {
+        "name": "Full Stack: Backend + UI",
+        "configurations": [
+          "Backend: FastAPI Server",
+          "UI: Gradio Simple"
+        ],
+        "stopAll": true
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Setup Development Environment",
+        "type": "shell",
+        "command": "bash scripts/setup-dev.sh",
+        "group": "build",
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Start Backend",
+        "type": "shell",
+        "command": "source venv/bin/activate && cd backend && python main.py",
+        "group": "build",
+        "isBackground": true,
+        "presentation": {
+          "reveal": "always",
+          "panel": "dedicated"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Start UI",
+        "type": "shell",
+        "command": "source venv/bin/activate && cd ui && python simple_main.py",
+        "group": "build",
+        "isBackground": true,
+        "presentation": {
+          "reveal": "always",
+          "panel": "dedicated"
+        },
+        "problemMatcher": []
+      }
+    ]
+  }
+}

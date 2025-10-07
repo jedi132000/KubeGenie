@@ -38,8 +38,31 @@ kubegenie/
 - Docker & Docker Compose
 - kubectl
 - Helm (optional)
+- VS Code (recommended for local development)
 
-### Quick Start
+### 🎯 Local IDE Development
+
+For the best local development experience with VS Code, debugging, and auto-completion:
+
+**Quick Start:**
+```bash
+# Clone and navigate to the project
+git clone <repository-url>
+cd kubegenie
+
+# Run the IDE quick start script
+chmod +x scripts/ide-quickstart.sh
+./scripts/ide-quickstart.sh
+
+# Open in VS Code
+code KubeGenie.code-workspace
+```
+
+Then press **F5** in VS Code to start debugging both backend and UI!
+
+📚 **See the complete guide**: [Local IDE Setup Documentation](docs/LOCAL_IDE_SETUP.md)
+
+### Quick Start (Manual Setup)
 
 1. **Clone the repository**
    ```bash
@@ -93,6 +116,12 @@ kubegenie/
 ```bash
 docker-compose up -d
 ```
+
+### 📖 Development Resources
+
+- **[Local IDE Setup Guide](docs/LOCAL_IDE_SETUP.md)** - Complete guide for VS Code development with debugging, tasks, and shortcuts
+- **[Contributing Guide](docs/CONTRIBUTING.md)** - Contribution guidelines and coding standards
+- **Setup Script**: `./scripts/ide-quickstart.sh` - Automated local development setup
 
 ## 📋 Usage Examples
 
