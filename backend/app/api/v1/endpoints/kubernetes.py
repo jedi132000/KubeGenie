@@ -1,0 +1,134 @@
+"""
+Kubernetes API endpoints
+"""
+
+from fastapi import APIRouter, HTTPException, status, Depends, Query
+from typing import Dict, Any, List, Optional
+import logging
+from app.core.kubernetes import k8s_client
+from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter()
+
+
+class DeploymentRequest(BaseModel):
+    """Deployment creation request"""
+    name: str
+    image: str
+    replicas: int = 1
+    namespace: str = "default"
+
+
+class ScaleRequest(BaseModel):
+    """Deployment scaling request"""
+    replicas: int
+
+
+@router.get("/pods")
+async def get_pods(
+    namespace: str = Query(default="default", description="Kubernetes namespace")
+) -> List[Dict[str, Any]]:
+    """Get pods in namespace"""
+    try:
+        pods = await k8s_client.get_pods(namespace=namespace)
+        return pods
+    except Exception as e:
+        logger.error(f"Failed to get pods: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get pods: {str(e)}"
+        )
+
+
+@router.post("/deployments")
+async def create_deployment(request: DeploymentRequest) -> Dict[str, Any]:
+    """Create a new deployment"""
+    try:
+        result = await k8s_client.create_deployment(
+            name=request.name,
+            image=request.image,
+            replicas=request.replicas,
+            namespace=request.namespace
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Failed to create deployment: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create deployment: {str(e)}"
+        )
+
+
+@router.patch("/deployments/{name}/scale")
+async def scale_deployment(
+    name: str,
+    request: ScaleRequest,
+    namespace: str = Query(default="default", description="Kubernetes namespace")
+) -> Dict[str, Any]:
+    """Scale a deployment"""
+    try:
+        result = await k8s_client.scale_deployment(
+            name=name,
+            replicas=request.replicas,
+            namespace=namespace
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Failed to scale deployment: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to scale deployment: {str(e)}"
+        )
+
+
+@router.delete("/deployments/{name}")
+async def delete_deployment(
+    name: str,
+    namespace: str = Query(default="default", description="Kubernetes namespace")
+) -> Dict[str, Any]:
+    """Delete a deployment"""
+    try:
+        result = await k8s_client.delete_deployment(name=name, namespace=namespace)
+        return result
+    except Exception as e:
+        logger.error(f"Failed to delete deployment: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete deployment: {str(e)}"
+        )
+
+
+@router.get("/events")
+async def get_events(
+    namespace: str = Query(default="default", description="Kubernetes namespace")
+) -> List[Dict[str, Any]]:
+    """Get events in namespace"""
+    try:
+        events = await k8s_client.get_events(namespace=namespace)
+        return events
+    except Exception as e:
+        logger.error(f"Failed to get events: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get events: {str(e)}"
+        )
+
+
+@router.get("/namespaces")
+async def list_namespaces() -> List[Dict[str, Any]]:
+    """List all namespaces"""
+    try:
+        # Implementation would go here
+        return [
+            {"name": "default", "status": "Active"},
+            {"name": "kube-system", "status": "Active"},
+            {"name": "crossplane-system", "status": "Active"}
+        ]
+    except Exception as e:
+        logger.error(f"Failed to list namespaces: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list namespaces: {str(e)}"
+        )
