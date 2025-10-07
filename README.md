@@ -6,12 +6,14 @@ KubeGenie is an intelligent agent that empowers platform engineers, DevOps, and 
 
 ## 🚀 Features
 
-- **Conversational Interface**: Interact via CLI, web app, or chat platforms
-- **Kubernetes Operations**: Deploy, scale, and manage workloads with natural language
-- **Persistent Storage**: Dynamic PVC/PV management with backup/restore capabilities
+- **Conversational AI Interface**: OpenAI GPT-powered natural language processing for Kubernetes operations
+- **Gradio Web UI**: Modern, interactive web interface with real-time chat and dashboard capabilities  
+- **Kubernetes Operations**: Deploy, scale, and manage workloads with natural language commands
+- **Authentication & Security**: JWT-based authentication with simple token system for API access
+- **Real-time Monitoring**: Live cluster status, pod monitoring, and resource management
 - **Crossplane Integration**: Multi-cloud infrastructure provisioning and management
-- **Safety Controls**: Policy engine with RBAC, audit logging, and operation previews
-- **Observability**: Integration with Prometheus, Grafana, and GitOps workflows
+- **Safety Controls**: Policy engine with RBAC, audit logging, and operation validation
+- **Observability**: Integration with Prometheus, Grafana, and comprehensive logging
 
 ## 🏗️ Architecture
 
@@ -45,30 +47,51 @@ kubegenie/
    cd kubegenie
    ```
 
-2. **Set up the backend**
+2. **Set up virtual environment**
    ```bash
-   cd backend
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
    ```
 
-3. **Set up the UI**
+3. **Install dependencies**
    ```bash
-   cd ui
-   pip install -r requirements.txt
+   # Install backend dependencies
+   pip install -r backend/requirements.txt
+   
+   # Install UI dependencies  
+   pip install -r ui/requirements.txt
+   
+   # Install additional packages for OpenAI integration
+   pip install openai gradio==4.20.0
    ```
 
-4. **Run with Docker Compose**
+4. **Environment Configuration**
    ```bash
-   docker-compose up -d
+   # Copy environment template and configure
+   cp .env.example .env
+   
+   # Edit .env and add your OpenAI API key:
+   # OPENAI_API_KEY=sk-proj-your-openai-api-key-here
    ```
 
-### Environment Setup
+5. **Start the services**
+   ```bash
+   # Terminal 1: Start backend (with virtual environment)
+   cd /path/to/kubegenie && source venv/bin/activate && cd backend && python main.py
+   
+   # Terminal 2: Start UI (with virtual environment)  
+   cd /path/to/kubegenie && source venv/bin/activate && cd ui && python test_buttons.py
+   ```
 
-Copy the environment template and configure your settings:
+6. **Access the application**
+   - **Backend API**: http://localhost:8000
+   - **API Documentation**: http://localhost:8000/api/docs
+   - **Test UI**: http://localhost:7880 (Button testing interface)
+   - **Health Check**: http://localhost:8000/health
+
+### Docker Compose (Alternative)
 ```bash
-cp .env.example .env
+docker-compose up -d
 ```
 
 ## 📋 Usage Examples
@@ -89,11 +112,20 @@ kubegenie status --namespace=production
 ```
 
 ### Gradio Web Interface
-Navigate to `http://localhost:7860` to access the interactive Gradio web interface with:
-- **Chat Interface**: Natural language conversation with KubeGenie
-- **Kubernetes Management**: Direct cluster operations and monitoring
-- **Crossplane Resources**: Cloud resource provisioning and management
-- **Real-time Status**: Live cluster health and monitoring dashboards
+Navigate to `http://localhost:7880` to access the interactive test interface with:
+- **Authentication Testing**: Test login with credentials (admin/admin123)
+- **Chat Interface**: Natural language conversation with OpenAI GPT-powered responses
+- **Kubernetes Management**: Direct cluster operations and real-time monitoring
+- **API Testing**: Test all backend endpoints with proper authentication
+
+### Chat Examples
+```
+"show me cluster info"
+"list all pods in default namespace"  
+"what's the status of my cluster?"
+"deploy nginx with 3 replicas"
+"scale my redis deployment to 5 replicas"
+```
 
 ## 🔒 Security
 

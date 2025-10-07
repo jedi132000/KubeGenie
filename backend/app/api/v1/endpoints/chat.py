@@ -2,10 +2,13 @@
 Chat/Conversational AI endpoints
 """
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Header
 from typing import Dict, Any, List
 import logging
 from pydantic import BaseModel
+
+from app.core.llm import llm_processor
+from app.api.v1.endpoints.auth_simple import verify_simple_token
 
 logger = logging.getLogger(__name__)
 
@@ -26,87 +29,40 @@ class ChatResponse(BaseModel):
 
 
 @router.post("/message")
-async def process_message(chat_message: ChatMessage) -> ChatResponse:
+async def process_message(
+    chat_message: ChatMessage,
+    authorization: str = Header(None)
+) -> ChatResponse:
     """Process a natural language message and return actions"""
     try:
-        message = chat_message.message.lower()
-        
-        # Simple command parsing (would be replaced with LLM integration)
-        if "deploy" in message and "nginx" in message:
-            return ChatResponse(
-                response="I'll deploy nginx for you. Extracting replicas from your message...",
-                actions=[
-                    {
-                        "type": "create_deployment",
-                        "parameters": {
-                            "name": "nginx",
-                            "image": "nginx:latest",
-                            "replicas": 3,
-                            "namespace": "default"
-                        }
-                    }
-                ],
-                suggestions=[
-                    "Would you like to expose this deployment as a service?",
-                    "Should I configure an ingress for external access?"
-                ]
+        # Verify authentication
+        if not authorization or not authorization.startswith("Bearer "):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Missing or invalid authorization header"
             )
         
-        elif "scale" in message:
-            return ChatResponse(
-                response="I can help you scale your deployment. Which deployment would you like to scale?",
-                actions=[],
-                suggestions=[
-                    "scale nginx to 5 replicas",
-                    "scale redis to 3 replicas"
-                ]
-            )
+        token = authorization.replace("Bearer ", "")
+        current_user = verify_simple_token(token)
         
-        elif "status" in message or "health" in message:
-            return ChatResponse(
-                response="Let me check the status of your cluster...",
-                actions=[
-                    {
-                        "type": "get_cluster_status",
-                        "parameters": {"namespace": "default"}
-                    }
-                ],
-                suggestions=[
-                    "Show me pods in production namespace",
-                    "Check events in the cluster"
-                ]
-            )
+        # Prepare context with user information
+        context = {
+            "user": current_user,
+            "username": current_user.get("username", "unknown"),
+            "permissions": current_user.get("permissions", [])
+        }
         
-        elif "provision" in message and ("s3" in message or "rds" in message or "bucket" in message):
-            return ChatResponse(
-                response="I'll help you provision cloud resources via Crossplane.",
-                actions=[
-                    {
-                        "type": "provision_resource",
-                        "parameters": {
-                            "provider": "aws",
-                            "resource_type": "s3" if "s3" in message or "bucket" in message else "rds"
-                        }
-                    }
-                ],
-                suggestions=[
-                    "Configure backup policies",
-                    "Set up monitoring and alerts"
-                ]
-            )
+        # Process message using LLM processor
+        response_text, actions, suggestions = llm_processor.process_message(
+            chat_message.message, 
+            context
+        )
         
-        else:
-            return ChatResponse(
-                response="I'm KubeGenie, your Kubernetes assistant! I can help you with deployments, scaling, monitoring, and cloud resource provisioning.",
-                actions=[],
-                suggestions=[
-                    "deploy nginx with 3 replicas",
-                    "scale my-app to 5 replicas", 
-                    "show cluster status",
-                    "provision an S3 bucket",
-                    "list all pods in production"
-                ]
-            )
+        return ChatResponse(
+            response=response_text,
+            actions=actions,
+            suggestions=suggestions
+        )
             
     except Exception as e:
         logger.error(f"Failed to process message: {e}")

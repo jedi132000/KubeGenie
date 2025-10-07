@@ -5,7 +5,7 @@ Kubernetes API endpoints
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from typing import Dict, Any, List, Optional
 import logging
-from app.core.kubernetes import k8s_client
+from app.core.kubernetes_real import k8s_client
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -120,15 +120,23 @@ async def get_events(
 async def list_namespaces() -> List[Dict[str, Any]]:
     """List all namespaces"""
     try:
-        # Implementation would go here
-        return [
-            {"name": "default", "status": "Active"},
-            {"name": "kube-system", "status": "Active"},
-            {"name": "crossplane-system", "status": "Active"}
-        ]
+        return await k8s_client.get_namespaces()
     except Exception as e:
         logger.error(f"Failed to list namespaces: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to list namespaces: {str(e)}"
+        )
+
+
+@router.get("/cluster-info")
+async def get_cluster_info() -> Dict[str, Any]:
+    """Get cluster information"""
+    try:
+        return await k8s_client.get_cluster_info()
+    except Exception as e:
+        logger.error(f"Failed to get cluster info: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get cluster info: {str(e)}"
         )

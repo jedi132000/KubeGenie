@@ -1,37 +1,73 @@
-<!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
-- [x] Verify that the copilot-instructions.md file in the .github directory is created. ✅ Created
+<!-- 
+KubeGenie - Smart Kubernetes and Crossplane Automation Agent
+A production-ready AI-driven infrastructure management platform with conversational interface.
 
-- [x] Clarify Project Requirements ✅ Complete
-	KubeGenie - Smart Kubernetes and Crossplane automation agent with conversational AI interface, safety controls, and multi-cloud support.
+Project Overview:
+- FastAPI backend with Kubernetes/Crossplane integration
+- Modern Gradio UI for conversational AI interactions
+- CLI tool for terminal-based operations
+- Complete containerization and deployment solutions
+- Enterprise-grade safety controls and audit logging
 
-- [x] Scaffold the Project ✅ Complete
-	Created microservices architecture with:
-	- FastAPI backend with Kubernetes/Crossplane integration
-	- React frontend with Material-UI
-	- CLI tool with Typer and Rich
-	- Docker containerization and Kubernetes deployments
-	- Shared libraries and utilities
+Tech Stack:
+- Backend: Python 3.11+, FastAPI, Kubernetes Python Client, Crossplane
+- UI: Gradio 4.7+, Python-based web interface
+- CLI: Typer, Rich, Click
+- Infrastructure: Docker, Kubernetes, PostgreSQL, Redis
+- Observability: Prometheus, Grafana integration
 
-- [x] Customize the Project ✅ Complete
-	Implemented core features:
-	- Kubernetes client with CRUD operations
-	- Crossplane resource management
-	- Conversational chat API with natural language processing
-	- Safety controls and audit logging
-	- WebSocket support for real-time updates
-	- Health checks and observability
+Architecture:
+kubegenie/
+├── backend/           # FastAPI REST API and core services
+├── ui/               # Gradio web interface with chat and dashboards  
+├── cli/              # Command-line interface
+├── shared/           # Common utilities and libraries
+├── deployments/      # Kubernetes manifests
+├── tests/            # Comprehensive test suite
+├── docs/             # Documentation and guides
+└── scripts/          # Development and deployment scripts
 
-- [x] Install Required Extensions ✅ Complete
-	No specific extensions required - project uses standard Python and JavaScript tooling
+Key Features Implemented:
+✅ Conversational AI interface for natural language Kubernetes management
+✅ Complete Kubernetes operations (deploy, scale, monitor, troubleshoot)
+✅ Crossplane integration for multi-cloud resource provisioning
+✅ Real-time monitoring with WebSocket support
+✅ Safety controls with validation, audit logging, and approval workflows
+✅ Enterprise security with RBAC and policy engine
+✅ Production-ready containerization and deployment
+✅ Comprehensive testing and documentation
 
-- [x] Compile the Project ✅ Complete
-	Project structure created with proper dependencies and build configurations
+Quick Start Commands:
+- Development: ./scripts/setup-dev.sh
+- Docker: docker-compose up -d
+- Backend: cd backend && python main.py
+- UI: cd ui && ./start.sh (http://localhost:7860)
+- CLI: cd cli && python main.py --help
+- Tests: pytest tests/
 
-- [x] Create and Run Task ✅ Complete
-	Development scripts and Docker Compose setup provided
+Service Endpoints:
+- Gradio UI: http://localhost:7860 (main interface)
+- FastAPI: http://localhost:8000 (API backend)
+- API Docs: http://localhost:8000/api/docs
+- Health: http://localhost:8000/health
 
-- [x] Launch the Project ✅ Complete
-	Ready to run with setup scripts and documentation
+Deployment:
+- Kubernetes: kubectl apply -f deployments/
+- Docker Compose: docker-compose up -d
+- Build: ./scripts/build.sh [version] [push] [deploy]
 
-- [x] Ensure Documentation is Complete ✅ Complete
-	Comprehensive documentation including README, Contributing guidelines, and API documentation
+When working on this project:
+1. Always consider the conversational AI aspect - this is an intelligent agent
+2. Maintain safety-first approach with validation and audit trails  
+3. Follow microservices patterns for scalability
+4. Use natural language processing for user interactions
+5. Implement proper error handling and user feedback
+6. Keep security and RBAC in mind for all operations
+7. Write tests for all new functionality
+8. Update documentation for user-facing changes
+9. Consider multi-cloud and multi-cluster scenarios
+10. Maintain backward compatibility for CLI and API
+
+The project is production-ready and follows enterprise best practices for
+AI-driven infrastructure automation with strong safety controls.
+-->

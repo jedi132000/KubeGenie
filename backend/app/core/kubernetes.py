@@ -5,8 +5,24 @@ Kubernetes client and operations
 import asyncio
 import logging
 from typing import Dict, Any, List, Optional
-from kubernetes import client, config
-from kubernetes.client.rest import ApiException
+
+try:
+    from kubernetes import client, config
+    from kubernetes.client.rest import ApiException
+    from kubernetes.config.config_exception import ConfigException
+    KUBERNETES_AVAILABLE = True
+except ImportError:
+    # Kubernetes not available, use mocks
+    KUBERNETES_AVAILABLE = False
+    class MockClient:
+        def load_incluster_config(self): pass
+        def load_kube_config(self): pass
+    client = MockClient()
+    config = MockClient()
+    class ApiException(Exception):
+        pass
+    class ConfigException(Exception):
+        pass
 
 logger = logging.getLogger(__name__)
 
@@ -21,30 +37,32 @@ class KubernetesClient:
         self.networking_v1: Optional[client.NetworkingV1Api] = None
         self.custom_objects: Optional[client.CustomObjectsApi] = None
         
-    async def initialize(self) -> None:
-        """Initialize Kubernetes client"""
+    async def initialize(self):
+        """Initialize Kubernetes client (mock for development)"""
         try:
-            # Try to load in-cluster config first
+            # Try in-cluster config first (for pods running in K8s)
+            config.load_incluster_config()
+            logger.info("Loaded in-cluster Kubernetes configuration")
+        except ConfigException:
             try:
-                config.load_incluster_config()
-                logger.info("Loaded in-cluster Kubernetes configuration")
-            except config.ConfigException:
-                # Fallback to local kubeconfig
+                # Fall back to kubeconfig file
                 config.load_kube_config()
-                logger.info("Loaded local Kubernetes configuration")
-                
-            # Initialize API clients
-            self.api_client = client.ApiClient()
-            self.v1 = client.CoreV1Api()
-            self.apps_v1 = client.AppsV1Api()
-            self.networking_v1 = client.NetworkingV1Api()
-            self.custom_objects = client.CustomObjectsApi()
-            
-            logger.info("Kubernetes client initialized successfully")
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize Kubernetes client: {e}")
-            raise
+                logger.info("Loaded kubeconfig from file")
+            except ConfigException as e:
+                logger.warning(f"No Kubernetes config found: {e}")
+                logger.info("Using mock Kubernetes client for development")
+                # Create mock clients for development
+                self.v1 = None
+                self.apps_v1 = None
+                self.extensions_v1beta1 = None
+                return
+        
+        # Initialize API clients only if config was successful
+        self.v1 = client.CoreV1Api()
+        self.apps_v1 = client.AppsV1Api()
+        self.extensions_v1beta1 = client.ExtensionsV1beta1Api()
+        
+        logger.info("Kubernetes client initialized successfully")
     
     async def get_pods(self, namespace: str = "default") -> List[Dict[str, Any]]:
         """Get pods in namespace"""

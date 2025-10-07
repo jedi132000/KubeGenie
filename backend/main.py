@@ -16,7 +16,7 @@ from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.api.v1 import api_router
 from app.core.database import engine, Base
-from app.core.kubernetes import k8s_client
+from app.core.kubernetes_real import k8s_client
 from app.core.websocket_manager import websocket_manager
 
 # Setup logging

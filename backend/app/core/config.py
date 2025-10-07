@@ -66,6 +66,11 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = Field(default="redis://localhost:6379/0", env="REDIS_URL")
     
+    # AI/LLM Configuration
+    OPENAI_API_KEY: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
+    OPENAI_MODEL: str = Field(default="gpt-3.5-turbo", env="OPENAI_MODEL")
+    ENABLE_LLM: bool = Field(default=True, env="ENABLE_LLM")
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
