@@ -16,17 +16,13 @@ UI_HOST=${KUBEGENIE_UI_HOST:-"0.0.0.0"}
 
 echo "📦 Setting up environment..."
 
-# Create virtual environment if it doesn't exist
-if [ ! -d "venv" ]; then
-    echo "Creating Python virtual environment..."
-    python3 -m venv venv
-fi
 
-echo "Activating virtual environment..."
-source venv/bin/activate
+echo "Activating global Python 3.11 virtual environment..."
+source /Users/oladimejioladipo/kubegenie/.venv/bin/activate
 
-# Install dependencies
-echo "Installing dependencies..."
+
+# Install dependencies (optional, only if needed)
+echo "Ensuring dependencies are installed..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
@@ -40,4 +36,4 @@ echo "   • Press Ctrl+C to stop"
 echo ""
 
 # Start the Gradio app
-python gradio_app.py
+python simple_main.py

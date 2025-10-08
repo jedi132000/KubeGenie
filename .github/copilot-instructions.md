@@ -3,7 +3,7 @@ KubeGenie - Smart Kubernetes and Crossplane Automation Agent
 A production-ready AI-driven infrastructure management platform with conversational interface.
 
 Project Overview:
-- FastAPI backend with Kubernetes/Crossplane integration
+- FastAPI backend with agent abstraction, multi-cluster management, and Kubernetes/Crossplane integration
 - Modern Gradio UI for conversational AI interactions
 - CLI tool for terminal-based operations
 - Complete containerization and deployment solutions
@@ -18,16 +18,20 @@ Tech Stack:
 
 Architecture:
 kubegenie/
-├── backend/           # FastAPI REST API and core services
-├── ui/               # Gradio web interface with chat and dashboards  
-├── cli/              # Command-line interface
-├── shared/           # Common utilities and libraries
-├── deployments/      # Kubernetes manifests
-├── tests/            # Comprehensive test suite
-├── docs/             # Documentation and guides
-└── scripts/          # Development and deployment scripts
+├── app/               # FastAPI REST API, agent and cluster manager modules
+├── ui/                # Gradio web interface with chat and dashboards  
+├── cli/               # Command-line interface
+├── shared/            # Common utilities and libraries
+├── deployments/       # Kubernetes manifests
+├── tests/             # Comprehensive test suite
+├── docs/              # Documentation and guides
+└── scripts/           # Development and deployment scripts
 
 Key Features Implemented:
+✅ Agent abstraction for cluster operations, lifecycle, and health
+✅ Multi-cluster management (cloud and bare metal)
+✅ Cloud cluster provisioning (EKS, GKE, AKS) and bare metal support
+✅ Extensibility via provider/agent registry
 ✅ Conversational AI interface for natural language Kubernetes management
 ✅ Complete Kubernetes operations (deploy, scale, monitor, troubleshoot)
 ✅ Crossplane integration for multi-cloud resource provisioning
@@ -40,7 +44,7 @@ Key Features Implemented:
 Quick Start Commands:
 - Development: ./scripts/setup-dev.sh
 - Docker: docker-compose up -d
-- Backend: cd backend && python main.py
+- Backend: cd app && python main.py
 - UI: cd ui && ./start.sh (http://localhost:7860)
 - CLI: cd cli && python main.py --help
 - Tests: pytest tests/

@@ -1,60 +1,64 @@
 # KubeGenie
 
-**Smart Kubernetes and Crossplane automation agent**
 
-KubeGenie is an intelligent agent that empowers platform engineers, DevOps, and SRE teams to manage Kubernetes clusters and provision cloud infrastructure via Crossplane using natural language commands.
+**Smart Kubernetes and Crossplane Automation Agent**
+
+KubeGenie is an intelligent agent for managing Kubernetes clusters (cloud and bare metal) and provisioning infrastructure via Crossplane, with multi-cluster support, agent abstraction, and extensibility.
+
 
 ## 🚀 Features
 
-- **Conversational AI Interface**: OpenAI GPT-powered natural language processing for Kubernetes operations
-- **Gradio Web UI**: Modern, interactive web interface with real-time chat and dashboard capabilities  
-- **Kubernetes Operations**: Deploy, scale, and manage workloads with natural language commands
-- **Authentication & Security**: JWT-based authentication with simple token system for API access
-- **Real-time Monitoring**: Live cluster status, pod monitoring, and resource management
-- **Crossplane Integration**: Multi-cloud infrastructure provisioning and management
-- **Safety Controls**: Policy engine with RBAC, audit logging, and operation validation
-- **Observability**: Integration with Prometheus, Grafana, and comprehensive logging
+- **Agent Abstraction**: Modular agent classes for cluster operations, lifecycle, and health management
+- **Multi-Cluster Management**: Register, list, and switch between cloud and bare metal clusters
+- **Cloud & Bare Metal Support**: Provision and manage clusters in EKS, GKE, AKS, and on-prem
+- **Extensibility**: Provider/agent registry for easy addition of new cluster types
+- **Conversational AI Interface**: Natural language Kubernetes management
+- **Gradio Web UI**: Real-time chat and dashboards
+- **Authentication & Security**: JWT, RBAC, audit logging
+- **Custom Resource & Operator Support**: Manage CRDs and operators
+- **Safety Controls**: Validation, approval workflows
+- **Observability**: Prometheus, Grafana integration
+
 
 ## 🏗️ Architecture
 
 ```
 kubegenie/
-├── backend/           # FastAPI backend service
-├── ui/               # Gradio web interface
-├── cli/              # Command-line interface
-├── shared/           # Shared libraries and utilities
-├── docs/             # Documentation
-├── tests/            # Test suites
-├── deployments/      # Kubernetes manifests
-└── scripts/          # Build and deployment scripts
+├── app/               # FastAPI backend, agent and cluster manager modules
+├── ui/                # Gradio web interface
+├── cli/               # Command-line interface
+├── shared/            # Shared libraries and utilities
+├── docs/              # Documentation
+├── tests/             # Test suites
+├── deployments/       # Kubernetes manifests
+└── scripts/           # Build and deployment scripts
 ```
+
 
 ## 🛠️ Development & Quick Start
 
-### Prerequisites
 
+### Prerequisites
 - Python 3.11+
 - Node.js 18+
 - Docker & Docker Compose
 - kubectl
 - Helm (optional)
 
-### Quick Start
 
+### Quick Start
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
    cd kubegenie
    ```
-
 2. **Install dependencies**
    ```bash
    # Install backend dependencies
-   pip install -r backend/requirements.txt
+   pip install -r app/requirements.txt
    # Install UI dependencies
    pip install -r ui/requirements.txt
    ```
-
 3. **Start backend and UI**
    ```bash
    # Start backend

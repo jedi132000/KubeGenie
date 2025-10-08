@@ -27,7 +27,7 @@ Thank you for your interest in contributing to KubeGenie! This document provides
 6. Update documentation as needed
 7. Submit a pull request
 
-## 🛠️ Development Setup
+## 🛠️ Development Setup & Repo Hygiene
 
 ### Prerequisites
 
@@ -55,9 +55,24 @@ Thank you for your interest in contributing to KubeGenie! This document provides
    docker-compose up -d
    ```
 
-4. **Run backend**
+4. **Run backend and UI**
    ```bash
    cd backend
+   python main.py
+
+   # In a separate terminal
+   cd ../ui
+   python simple_main.py
+   ```
+
+### Repo Hygiene
+
+- Do not commit venv/, __pycache__, or log files.
+- Keep only essential code, configs, and documentation.
+
+### Documentation
+
+- Update docs to reflect live cluster data, production readiness, and safety controls.
    source venv/bin/activate
    python main.py
    ```

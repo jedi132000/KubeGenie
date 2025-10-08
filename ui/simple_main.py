@@ -523,7 +523,7 @@ def create_simple_ui():
 if __name__ == "__main__":
     print("🧞‍♂️ Starting KubeGenie Simple UI...")
     print(f"🔗 Backend URL: {BACKEND_URL}")
-    print("🌐 UI will be available at: http://localhost:7862")
-    
+    ui_port = int(os.getenv("KUBEGENIE_UI_PORT", "7860"))
+    print(f"🌐 UI will be available at: http://localhost:{ui_port}")
     demo = create_simple_ui()
-    demo.launch(server_port=7875, share=False)
+    demo.launch(server_port=ui_port, share=False)
