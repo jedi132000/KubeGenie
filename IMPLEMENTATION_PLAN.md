@@ -36,12 +36,17 @@
 - Provide templates for common CRDs and operator patterns.
 
 ## 8. Documentation & Examples
-- Update documentation to cover new abstractions, flows, and extension points.
-- Provide example configurations for cloud and bare metal clusters.
-- Add usage guides for multi-cluster and agent features.
 
-## 9. Testing & Validation
-- Write unit and integration tests for new agent, manager, and provisioning logic.
+## 9. Kubernetes Functionality Extensions
+- Advanced resource management: Deploy, update, delete all resource types (Deployments, StatefulSets, DaemonSets, Services, Ingress, ConfigMaps, Secrets, CRDs, operators)
+- Multi-cluster operations: Add/remove/switch clusters, health checks, metrics, real-time monitoring, automated scaling, rolling/canary updates
+- Security & access control: RBAC management, namespace isolation, resource quotas, network policies, audit logging, compliance reporting
+- Troubleshooting & diagnostics: Pod/node log streaming, event inspection, automated troubleshooting, resource usage analysis
+- Conversational AI & automation: Natural language commands, automated workflows, approval flows
+- Crossplane & multi-cloud integration: Provision cloud resources (DBs, buckets, VMs), manage infrastructure across AWS/GCP/Azure/bare metal
+- Extensibility: Plugin/agent system, webhooks, event-driven automation
+- UI/CLI enhancements: Visual dashboards, advanced CLI commands
+- Add usage guides for multi-cluster and agent features.
 - Validate multi-cluster operations in CI/CD pipeline.
 - Add test cases for cloud and bare metal scenarios.
 

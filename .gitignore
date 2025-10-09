@@ -293,3 +293,13 @@ Thumbs.db
 # Configuration files with secrets
 config/local.yml
 config/secrets.yml
+
+# KubeGenie specific ignores
+chroma_db/          # Runtime vector database - not committed
+temp_*.py
+test_*.py
+fix_*.py
+*_test.py
+api.log
+ui.log
+nohup.out
