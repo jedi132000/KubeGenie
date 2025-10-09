@@ -1,10 +1,17 @@
-# KubeGenie 🤖
+# KubeGenie# KubeGenie 🤖
 
-**AI-Powered Kubernetes Multi-Cluster Management Platform**
 
-KubeGenie is a production-ready AI-driven infrastructure management platform that provides conversational Kubernetes cluster management with advanced analytics, multi-agent coordination, and real-time monitoring.
 
-## 🚀 Features
+Fresh start - Simple Kubernetes management tool.**AI-Powered Kubernetes Multi-Cluster Management Platform**
+
+
+
+## Getting StartedKubeGenie is a production-ready AI-driven infrastructure management platform that provides conversational Kubernetes cluster management with advanced analytics, multi-agent coordination, and real-time monitoring.
+
+
+
+This is a clean slate. Ready to build something simple and functional.## 🚀 Features
+
 
 - **🤖 Conversational AI Interface**: Natural language Kubernetes management through Gradio chat UI
 - **🔍 Real-Time Cluster Discovery**: Automatic detection and connection to Kind, EKS, GKE, AKS clusters
