@@ -1,53 +1,65 @@
 """
-KubeGenie Chat Interface
-Gradio-based conversational UI for Kubernetes management
+Fixed KubeGenie Chat Interface
+Clean implementation with proper Gradio messages format
 
-Step 3: Enhanced with Kubernetes client integration
+Step 3: Enhanced with Kubernetes client integration (Fixed)
 """
 
 import gradio as gr
 import os
-from typing import List, Tuple
+from typing import List, Dict
 from datetime import datetime
 
 # Import Kubernetes operations (with fallback)
 try:
     from ..tools.k8s_operations import KubernetesOperations
-    from ..tools.k8s_client import get_available_contexts, get_current_context
     KUBERNETES_AVAILABLE = True
 except ImportError:
     KUBERNETES_AVAILABLE = False
     print("⚠️ Kubernetes client not available - install requirements.txt")
 
 
-class KubeGenieChat:
-    """Main chat interface for KubeGenie AI Kubernetes Assistant"""
+class KubeGenieChatFixed:
+    """Main chat interface for KubeGenie AI Kubernetes Assistant - Fixed Version"""
     
     def __init__(self):
-        self.conversation_history: List[dict] = []
-        self.cluster_connected = False
+        self.conversation_history: List[Dict[str, str]] = []
         
         # Initialize Kubernetes operations if available
         if KUBERNETES_AVAILABLE:
-            self.k8s_ops = KubernetesOperations()
+            try:
+                self.k8s_ops = KubernetesOperations()
+            except Exception:
+                self.k8s_ops = None
+                print("⚠️ Could not initialize Kubernetes operations")
         else:
             self.k8s_ops = None
         
-    def process_message(self, message: str, history: List[dict]) -> str:
-        """Process user message and return AI response"""
+    def process_user_message(self, message: str, history: List[Dict[str, str]]) -> tuple:
+        """Process user message and return updated history"""
         
-        # Store conversation history
-        self.conversation_history = history
-        
-        # Simple responses for testing (will be replaced with LangChain agent)
         if not message.strip():
-            return "Please enter a message."
-            
+            return history, ""
+        
         # Enhanced command recognition with Kubernetes integration
         message_lower = message.lower()
         
         # Check if Kubernetes operations are available
         k8s_status = "✅ Ready" if KUBERNETES_AVAILABLE else "❌ Not available"
+        
+        # Generate response based on message
+        response = self._generate_response(message, message_lower, k8s_status)
+        
+        # Add both user message and assistant response to history
+        new_history = history + [
+            {"role": "user", "content": message},
+            {"role": "assistant", "content": response}
+        ]
+        
+        return new_history, ""
+    
+    def _generate_response(self, message: str, message_lower: str, k8s_status: str) -> str:
+        """Generate response based on user message"""
         
         if any(word in message_lower for word in ['hello', 'hi', 'hey']):
             return f"""👋 Hello! I'm KubeGenie, your AI Kubernetes Assistant.
@@ -65,50 +77,12 @@ I can help you with:
 
 Try asking: "Connect to cluster" or "Show cluster status" """
 
-        elif 'status' in message_lower or 'health' in message_lower:
-            # Try to get cluster status if connected
-            cluster_status = ""
-            if KUBERNETES_AVAILABLE and self.k8s_ops and self.k8s_ops.is_connected():
-                cluster_status = "\n\n" + self.k8s_ops.get_cluster_overview()
-            elif KUBERNETES_AVAILABLE and self.k8s_ops:
-                cluster_status = "\n\n" + self.k8s_ops.get_connection_status()
-            
-            return f"""📊 **System Status:**
-- 🤖 KubeGenie Chat: ✅ Active
-- 🔗 Kubernetes Client: {k8s_status}
-- 🧠 LangChain Agents: ⏳ In development (Step 4+)
-- 📈 LangSmith Observability: ⏳ Pending (Step 10)
-
-**Next Steps:**
-Step 2: ✅ Basic Gradio interface 
-Step 3: 🔄 Kubernetes client setup (current)
-Step 4: 🔄 LangChain basic agent{cluster_status}"""
-
-        elif 'capabilities' in message_lower or 'what can you do' in message_lower:
-            return """🚀 **KubeGenie Capabilities (Full Roadmap):**
-
-**Phase 1: Foundation**
-- ✅ Conversational chat interface
-- 🔄 Kubernetes cluster integration
-- 🔄 AI agent framework (LangChain)
-- 🔄 Multi-agent routing (LangGraph)
-
-**Phase 2: Core Agents**
-- 🔄 Monitoring Agent: Real-time cluster health
-- 🔄 Cost Agent: Resource optimization
-- 🔄 Security Agent: Compliance & vulnerability scanning
-
-**Phase 3: Advanced Features**
-- 🔄 Multi-cluster management
-- 🔄 Crossplane integration (AWS, GCP, Azure)
-- 🔄 Advanced workflows & automation
-- 🔄 Production-ready deployment
-
-**Current Progress:** Step 2 of 15 complete"""
-
         elif 'connect' in message_lower and 'cluster' in message_lower:
             if not KUBERNETES_AVAILABLE:
                 return "❌ Kubernetes client not available. Install requirements: `pip install -r requirements.txt`"
+            
+            if not self.k8s_ops:
+                return "❌ Kubernetes operations not initialized. Check configuration."
             
             try:
                 return self.k8s_ops.connect_to_cluster()
@@ -116,8 +90,8 @@ Step 4: 🔄 LangChain basic agent{cluster_status}"""
                 return f"❌ Connection failed: {str(e)}\n\nTroubleshooting:\n- Check kubectl config: `kubectl cluster-info`\n- Verify kubeconfig: `~/.kube/config`"
         
         elif 'cluster' in message_lower and ('status' in message_lower or 'overview' in message_lower):
-            if not KUBERNETES_AVAILABLE:
-                return "❌ Kubernetes client not available. Install requirements first."
+            if not KUBERNETES_AVAILABLE or not self.k8s_ops:
+                return "❌ Kubernetes client not available."
             
             if not self.k8s_ops.is_connected():
                 return "❌ Not connected to cluster. Ask me to 'connect to cluster' first."
@@ -125,19 +99,19 @@ Step 4: 🔄 LangChain basic agent{cluster_status}"""
             return self.k8s_ops.get_cluster_overview()
         
         elif 'nodes' in message_lower or 'node' in message_lower:
-            if not KUBERNETES_AVAILABLE or not self.k8s_ops.is_connected():
+            if not KUBERNETES_AVAILABLE or not self.k8s_ops or not self.k8s_ops.is_connected():
                 return "❌ Connect to cluster first: ask me to 'connect to cluster'"
             
             return self.k8s_ops.list_cluster_nodes()
         
         elif 'pods' in message_lower and 'all' in message_lower:
-            if not KUBERNETES_AVAILABLE or not self.k8s_ops.is_connected():
+            if not KUBERNETES_AVAILABLE or not self.k8s_ops or not self.k8s_ops.is_connected():
                 return "❌ Connect to cluster first: ask me to 'connect to cluster'"
             
             return self.k8s_ops.list_all_pods()
         
         elif 'pods' in message_lower:
-            if not KUBERNETES_AVAILABLE or not self.k8s_ops.is_connected():
+            if not KUBERNETES_AVAILABLE or not self.k8s_ops or not self.k8s_ops.is_connected():
                 return "❌ Connect to cluster first: ask me to 'connect to cluster'"
             
             # Check if specific namespace mentioned
@@ -154,53 +128,51 @@ Step 4: 🔄 LangChain basic agent{cluster_status}"""
             return self.k8s_ops.list_pods_in_namespace(namespace)
         
         elif 'namespaces' in message_lower or 'namespace' in message_lower:
-            if not KUBERNETES_AVAILABLE or not self.k8s_ops.is_connected():
+            if not KUBERNETES_AVAILABLE or not self.k8s_ops or not self.k8s_ops.is_connected():
                 return "❌ Connect to cluster first: ask me to 'connect to cluster'"
             
             return self.k8s_ops.list_namespaces()
         
-        elif 'cluster' in message_lower:
-            if KUBERNETES_AVAILABLE:
-                current_context = get_current_context() if 'get_current_context' in globals() else None
-                contexts = get_available_contexts() if 'get_available_contexts' in globals() else []
-                
-                context_info = ""
-                if current_context:
-                    context_info = f"\n**Current Context:** `{current_context}`"
-                
-                if contexts:
-                    context_info += f"\n**Available Contexts:** {', '.join([f'`{c}`' for c in contexts[:5]])}"
-                
-                return f"""🔗 **Kubernetes Cluster Integration:**
+        elif 'status' in message_lower or 'health' in message_lower:
+            # Try to get cluster status if connected
+            cluster_status = ""
+            if KUBERNETES_AVAILABLE and self.k8s_ops and self.k8s_ops.is_connected():
+                cluster_status = "\n\n" + self.k8s_ops.get_cluster_overview()
+            elif KUBERNETES_AVAILABLE and self.k8s_ops:
+                cluster_status = "\n\n" + self.k8s_ops.get_connection_status()
+            
+            return f"""📊 **System Status:**
+- 🤖 KubeGenie Chat: ✅ Active
+- 🔗 Kubernetes Client: {k8s_status}
+- 🧠 LangChain Agents: ⏳ In development (Step 4+)
+- 📈 LangSmith Observability: ⏳ Pending (Step 10)
 
-**Current Status:** ✅ Client Ready (Step 3)
+**Next Steps:**
+Step 2: ✅ Basic Gradio interface 
+Step 3: ✅ Kubernetes client setup (current)
+Step 4: 🔄 LangChain basic agent{cluster_status}"""
 
-**Available Commands:**
-- "Connect to cluster" - Connect to default kubeconfig
-- "Show cluster status" - Get cluster overview
-- "List nodes" - Show all cluster nodes
-- "List pods" - Show pods in default namespace
-- "List all pods" - Show pods in all namespaces
-- "List namespaces" - Show all namespaces
+        elif 'capabilities' in message_lower or 'what can you do' in message_lower:
+            return """🚀 **KubeGenie Capabilities (Full Roadmap):**
 
-{context_info}
+**Phase 1: Foundation**
+- ✅ Conversational chat interface
+- ✅ Kubernetes cluster integration
+- 🔄 AI agent framework (LangChain)
+- 🔄 Multi-agent routing (LangGraph)
 
-**Ready for real cluster operations!** 🚀"""
-            else:
-                return """🔗 **Kubernetes Cluster Integration:**
+**Phase 2: Core Agents**
+- 🔄 Monitoring Agent: Real-time cluster health
+- 🔄 Cost Agent: Resource optimization
+- 🔄 Security Agent: Compliance & vulnerability scanning
 
-**Current Status:** ❌ Not Available
+**Phase 3: Advanced Features**
+- 🔄 Multi-cluster management
+- 🔄 Crossplane integration (AWS, GCP, Azure)
+- 🔄 Advanced workflows & automation
+- 🔄 Production-ready deployment
 
-**Installation Required:**
-```bash
-pip install -r requirements.txt
-```
-
-**Then you can:**
-- Connect to clusters via kubeconfig
-- Monitor pods, nodes, and services in real-time
-- Switch between multiple cluster contexts
-- Get comprehensive cluster health reports"""
+**Current Progress:** Step 3 of 15 complete"""
 
         elif 'crossplane' in message_lower or 'cloud' in message_lower:
             return """☁️ **Crossplane Multi-Cloud Integration:**
@@ -223,22 +195,19 @@ pip install -r requirements.txt
         else:
             return f"""🤔 I understand you said: "{message}"
 
-**Current Status:** I'm in early development (Step 2 of 15)
+**Current Status:** I'm in Step 3 of 15 - Kubernetes integration active!
 
-Right now I can respond to:
-- Greetings and introductions
-- Status and health checks  
-- Capability questions
-- Cluster and cloud integration questions
-
-**Coming Soon (Steps 3-4):**
-- Real Kubernetes cluster connectivity
-- LangChain AI agent for intelligent responses
-- Natural language command processing
+**Available Commands:**
+- "Connect to cluster" - Connect to your Kubernetes cluster
+- "Show cluster status" - Get comprehensive cluster overview
+- "List nodes" - See all cluster nodes
+- "List pods" - Show pods in default namespace
+- "List all pods" - Show pods across all namespaces
+- "List namespaces" - Show all cluster namespaces
 
 **Try asking:**
-- "What's your current status?"
-- "What are your capabilities?"
+- "Hello" or "What can you do?"
+- "Show me cluster status"
 - "Tell me about Crossplane integration" """
 
     def create_interface(self) -> gr.Blocks:
@@ -265,12 +234,12 @@ Right now I can respond to:
             # 🤖 KubeGenie - AI Kubernetes Assistant
             ### LangChain + LangGraph + LangSmith + Gradio Stack
             
-            **Current Status:** Step 2 - Basic Chat Interface ✅
+            **Current Status:** Step 3 - Kubernetes Client Integration ✅
             
             Chat with your AI Kubernetes assistant for cluster management, cost optimization, and security analysis.
             """)
             
-            # Chat interface
+            # Chat interface with proper messages format
             chatbot = gr.Chatbot(
                 value=[{"role": "assistant", "content": "👋 Welcome to KubeGenie! I'm your AI Kubernetes Assistant. Ask me about cluster status, capabilities, or what I can help you with."}],
                 height=500,
@@ -287,27 +256,12 @@ Right now I can respond to:
             
             # Status indicators
             with gr.Row():
-                gr.Markdown("**Status:** 🤖 Chat: ✅ | 🔗 K8s: ⏳ | 🧠 Agents: ⏳ | 📊 Observability: ⏳")
+                k8s_indicator = "✅ Ready" if KUBERNETES_AVAILABLE else "❌ Not available"
+                gr.Markdown(f"**Status:** 🤖 Chat: ✅ | 🔗 K8s: {k8s_indicator} | 🧠 Agents: ⏳ | 📊 Observability: ⏳")
             
-            # Handle message submission with messages format
-            def handle_message(message: str, history: List[dict]):
-                """Handle message submission with proper messages format"""
-                if not message.strip():
-                    return history, ""
-                
-                # Add user message to history
-                history.append({"role": "user", "content": message})
-                
-                # Get AI response
-                response = self.process_message(message, history)
-                
-                # Add assistant response to history
-                history.append({"role": "assistant", "content": response})
-                
-                return history, ""
-            
+            # Handle message submission
             msg.submit(
-                fn=handle_message,
+                fn=self.process_user_message,
                 inputs=[msg, chatbot],
                 outputs=[chatbot, msg]
             )
@@ -317,17 +271,18 @@ Right now I can respond to:
 
 def main():
     """Launch the KubeGenie chat interface"""
-    print("🚀 Starting KubeGenie Chat Interface...")
-    print("📍 Step 2: Basic Gradio interface")
+    print("🚀 Starting KubeGenie Chat Interface (Fixed Version)...")
+    print("📍 Step 3: Kubernetes client integration")
     
     # Initialize chat interface
-    chat = KubeGenieChat()
+    chat = KubeGenieChatFixed()
     interface = chat.create_interface()
     
-    # Launch with configuration
+    # Launch with configuration - find available port
+    port = int(os.environ.get("GRADIO_SERVER_PORT", 7863))
     interface.launch(
         server_name="127.0.0.1",
-        server_port=7861,  # Use different port to avoid conflicts
+        server_port=port,
         share=False,
         show_api=False,
         quiet=False
