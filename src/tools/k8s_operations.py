@@ -12,9 +12,27 @@ from .k8s_client import KubernetesClient, ClusterInfo, PodInfo, NodeInfo
 class KubernetesOperations:
     """High-level Kubernetes operations for KubeGenie"""
     
+    # Class-level shared connection state
+    _shared_client = None
+    _shared_connected = False
+    
     def __init__(self):
-        self.client = KubernetesClient()
-        self._connected = False
+        # Use shared client if available, otherwise create new one
+        if KubernetesOperations._shared_client is None:
+            KubernetesOperations._shared_client = KubernetesClient()
+        self.client = KubernetesOperations._shared_client
+        
+    @property
+    def _connected(self):
+        return KubernetesOperations._shared_connected
+        
+    @_connected.setter
+    def _connected(self, value):
+        KubernetesOperations._shared_connected = value
+    
+    def is_connected(self) -> bool:
+        """Check if connected to cluster"""
+        return self._connected
     
     def connect_to_cluster(self, kubeconfig_path: Optional[str] = None, context: Optional[str] = None) -> str:
         """
@@ -258,7 +276,3 @@ To connect to a cluster, ask:
 Ready for operations! """
         else:
             return "🟡 **Connection Status Unknown**"
-    
-    def is_connected(self) -> bool:
-        """Check if connected to a cluster"""
-        return self._connected

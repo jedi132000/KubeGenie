@@ -1,22 +1,20 @@
-# KubeGenie - AI Kubernet# Development tools
-pytest==7.4.3
-pytest-asyncio==0.21.1
-black==23.11.0
-ruff>=0.2.2sistant
+# KubeGenie - AI Kubernetes Assistant
 # Requirements for LangChain + LangGraph + LangSmith + Gradio stack
 
 # Core AI Framework
-langchain==0.1.0
-langchain-openai==0.0.5
-langchain-community==0.0.12
-langgraph==0.0.20
-langsmith==0.0.77
+langchain==0.2.14
+langchain-openai==0.1.23
+langchain-community==0.2.12
+langchain-core==0.2.33
+langgraph==0.2.14
+langsmith==0.1.104
 
 # UI Framework
-gradio==4.44.1
+gradio==5.49.1
 
 # Kubernetes Integration
-kubernetes==28.1.0
+kubernetes==34.1.0
+PyYAML==6.0.1
 
 # Crossplane Integration (Future)
 # crossplane-contrib-function-sdk==0.1.0
@@ -24,11 +22,11 @@ kubernetes==28.1.0
 
 # Core Python Dependencies
 python-dotenv==1.0.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
+pydantic==2.9.2
+pydantic-settings==2.6.0
 
 # Development Tools
 pytest==7.4.3
 pytest-asyncio==0.21.1
 black==23.11.0
-ruff==0.1.6
+ruff>=0.2.2
